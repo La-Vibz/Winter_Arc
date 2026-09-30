@@ -1,6 +1,6 @@
 // Réseau d'abord, cache en secours : les mises à jour du site arrivent tout de suite.
-const CACHE = 'winter-arc-v1';
-const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
+const CACHE = 'winter-arc-v2';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './vendor/supabase.js', './icons/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {

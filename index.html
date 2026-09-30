@@ -12,8 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Winter Arc">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js?v=2"></script>
+<script src="vendor/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Figtree:wght@400;500;600;700&family=Silkscreen&display=swap" rel="stylesheet">
@@ -855,18 +855,40 @@ function authHTML(){
    <button class="btn sec wide" id="signup" ${a.busy?'disabled':''} style="margin-top:8px">Créer mon compte</button></div>`;
 }
 function configHTML(){
-  return `<div class="join"><h3>Configuration manquante</h3><p>Renseigne l’URL et la clé de ton projet Supabase dans le fichier config.js (voir le guide). En attendant, tu peux tester en solo sur cet appareil.</p><button class="btn wide" id="solo">Tester en solo</button></div>`;
+  return `<div class="join"><h3>Configuration à vérifier</h3><p>${esc(S.cfgErr||'Renseigne l’URL et la clé de ton projet Supabase dans config.js.')}</p>${S.cfgSeen?`<p class="ro">Ce que l’app lit dans config.js :<br>URL = ${esc(S.cfgSeen.url||'(vide)')}<br>Clé = ${esc(S.cfgSeen.key?S.cfgSeen.key.slice(0,18)+'…':'(vide)')}</p>`:''}<button class="btn wide" id="solo">Tester en solo en attendant</button></div>`;
 }
+
 document.addEventListener('input',e=>{const f=e.target.dataset&&e.target.dataset.auth;if(f)S.auth[f]=e.target.value;});
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t||t.disabled)return;
   if(t.id==='signin')doAuth('signin');if(t.id==='signup')doAuth('signup');if(t.id==='solo')goSolo();
   if(t.id==='signout'&&SB){SB.auth.signOut().finally(()=>location.reload());}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&S.mode==='auth'&&e.target.dataset&&e.target.dataset.auth)doAuth('signin');});
+async function readConfig(){
+  // Lecture tolérante : contourne le cache et accepte les guillemets typographiques.
+  let url='',key='';
+  try{
+    const txt=await (await fetch('config.js?t='+Date.now(),{cache:'no-store'})).text();
+    const q='["\u201C\u201D\u2018\u2019\u00AB\u00BB\'`]';
+    const mu=txt.match(new RegExp('SUPABASE_URL\\s*:\\s*'+q+'\\s*([^"\u201C\u201D\u2018\u2019\u00AB\u00BB\'`\\s]+)'));
+    const mk=txt.match(new RegExp('SUPABASE_KEY\\s*:\\s*'+q+'\\s*([^"\u201C\u201D\u2018\u2019\u00AB\u00BB\'`\\s]+)'));
+    if(mu)url=mu[1];if(mk)key=mk[1];
+  }catch(e){}
+  const w=window.WA_CONFIG||{};
+  if(!url&&w.SUPABASE_URL)url=w.SUPABASE_URL;if(!key&&w.SUPABASE_KEY)key=w.SUPABASE_KEY;
+  url=String(url).trim().replace(/\/+$/,'').replace(/\/rest\/v1$/,'');key=String(key).trim();
+  return {url,key};
+}
 async function boot(){
   render();
-  const cfg=window.WA_CONFIG||{};
-  if(!window.supabase||!cfg.SUPABASE_URL||/COLLE|xxxx/i.test(cfg.SUPABASE_URL+cfg.SUPABASE_KEY)){S.mode='config';render();return;}
-  SB=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+  const c=await readConfig();S.cfgSeen=c;
+  let err='';
+  if(!c.url||!c.key)err='config.js est introuvable ou ne contient pas les deux valeurs. Vérifie qu’il est bien à la racine du dépôt, à côté d’index.html.';
+  else if(/COLLE_ICI/i.test(c.url+c.key))err='Les valeurs d’exemple COLLE_ICI… sont encore dans config.js en ligne. Remplace-les par ton Project URL et ta clé.';
+  else if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(c.url))err='L’URL n’a pas le bon format. Elle doit ressembler à https://abcdefghijklmnop.supabase.co';
+  else if(/^sb_secret_/i.test(c.key))err='C’est la clé secrète qui est dans config.js. Remplace-la tout de suite par la Publishable key (et régénère la clé secrète dans Supabase, elle est maintenant visible publiquement).';
+  else if(!window.supabase||!window.supabase.createClient)err='La bibliothèque Supabase n’a pas pu se charger. Vérifie que le dossier vendor a bien été envoyé sur GitHub.';
+  if(err){S.cfgErr=err;S.mode='config';render();return;}
+  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true}});
   const {data}=await SB.auth.getSession();
   if(data&&data.session)startWith(data.session.user.id);
   else{S.mode='auth';render();}
