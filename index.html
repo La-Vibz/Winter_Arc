@@ -593,7 +593,7 @@ function pmCmd(c){
   if(c==='pause'){PM.remain=pmLeft();PM.running=false;PM.endAt=null;}
   if(c==='reset'){PM.phase='work';PM.running=false;PM.endAt=null;PM.remain=pmTotal();}
   if(c==='skip'){PM.running=false;PM.endAt=null;PM.phase=PM.phase==='work'?'break':'work';PM.remain=pmTotal();}
-  pmSave();render();
+  pmSave();render();schedulePomoPush();
 }
 function pmComplete(){
   beep();
@@ -605,7 +605,7 @@ function pmComplete(){
     else toast('🍅 Pomodoro terminé. Place à la pause.');
     PM.phase='break';PM.remain=pmTotal();PM.endAt=Date.now()+PM.remain*1000;PM.running=true;
   } else {toast('Pause terminée, on repart ?');PM.phase='work';PM.remain=pmTotal();PM.running=false;PM.endAt=null;}
-  pmSave();render();
+  pmSave();render();schedulePomoPush();
 }
 const fmt=s=>pad(Math.floor(s/60))+':'+pad(s%60);
 setInterval(()=>{
@@ -726,7 +726,7 @@ function editorHTML(first){
 function persoHTML(w,st){
   const rk=rankOf(st.xp);
   let html=`<section class="show">${spr(S.uid,64)}<div><div class="big">${esc(S.me.pseudo)}</div><div class="meta">${rk.e} ${rk.name}, stade ${rk.i+1} sur 7${rk.next?'<br>'+rk.toNext+' XP pour grandir':''}</div><div class="wallet">${w.bal} 💠</div><div class="rec">Duels : ${w.wins} V, ${w.ties} N, ${w.losses} D</div></div></section>
-  <button class="btn sec wide" id="editp">Modifier pseudo, loisirs et apparence</button>${S.mode==='shared'?'<button class="btn ghost wide" id="signout">Se déconnecter</button>':''}`;
+  <button class="btn sec wide" id="editp">Modifier pseudo, loisirs et apparence</button>${S.mode==='shared'?'<button class="btn ghost wide" id="signout">Se déconnecter</button>':''}`+notifHTML();
   const items=shopItems().filter(i=>i.slot===S.slot);
   html+=`<h2>Boutique</h2><div class="tabsl">${SLOTS.map(([k,l])=>`<button class="pill ${S.slot===k?'on':''}" data-slot="${k}">${l}</button>`).join('')}</div><div class="shop">`;
   const eq=Object.assign({top:'tee-white',bottom:'jog-grey'},S.me.equip||{});
@@ -811,6 +811,66 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&PM.running&&pmLeft()<=0)pmComplete();});
 
+// ================= notifications push =================
+const VAPID_PUBLIC='BIH1v3AE-7iYp8Ob5RhEIAPfAze1OARBi3BmOxCICsRTsvP_dFFZBn_YeOe-PKEFEBrJixUX1OdC-gxBDgA0Gt0';
+S.push={supported:false,on:false,busy:false,msg:''};
+const NOTIF_TYPES=[['evening','Rappel de 20h s’il reste des piliers'],['duel','Résultat du duel le matin'],['overtake','Quand un pote te dépasse'],['pomo','Fin de pomodoro']];
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const swReady=()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,rej)=>setTimeout(()=>rej(new Error('service worker indisponible')),4000))]);
+function b64u(str){const pad='='.repeat((4-str.length%4)%4);const b=atob((str+pad).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0));}
+async function refreshPush(){
+  S.push.supported='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  if(!S.push.supported){S.push.msg=isIOS&&!isStandalone()?'Sur iPhone, ajoute d’abord l’app à l’écran d’accueil (Partager, puis Sur l’écran d’accueil), puis ouvre-la depuis son icône.':'Ce navigateur ne gère pas les notifications.';return;}
+  try{const reg=await swReady();const sub=await reg.pushManager.getSubscription();S.push.on=!!sub&&Notification.permission==='granted';}catch(e){}
+}
+async function enablePush(){
+  if(!SB||!S.push.supported)return;
+  S.push.busy=true;S.push.msg='';render();
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){S.push.msg='Notifications refusées. Tu peux les réautoriser dans les réglages du téléphone, rubrique Notifications.';throw 0;}
+    const reg=await swReady();
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+    const j=sub.toJSON();
+    const {error}=await SB.from('push_subscriptions').upsert({endpoint:j.endpoint,user_id:S.uid,p256dh:j.keys.p256dh,auth:j.keys.auth});
+    if(error){S.push.msg='Abonnement impossible côté serveur. As-tu lancé notifications.sql dans Supabase ?';throw 0;}
+    S.push.on=true;toast('🔔 Notifications activées');
+  }catch(e){if(e&&e.message&&!S.push.msg)S.push.msg='Activation impossible : '+e.message;}
+  S.push.busy=false;render();
+}
+async function disablePush(){
+  S.push.busy=true;render();
+  try{const reg=await swReady();const sub=await reg.pushManager.getSubscription();
+    if(sub){await SB.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}}catch(e){}
+  S.push.on=false;S.push.busy=false;render();toast('Notifications désactivées sur cet appareil');
+}
+function notifPref(k){return !(S.me&&S.me.notif&&S.me.notif[k]===false);}
+function setNotifPref(k){S.me.notif=Object.assign({},S.me.notif||{},{[k]:!notifPref(k)});render();save();}
+function notifHTML(){
+  if(S.mode!=='shared')return '';
+  const p=S.push;
+  let body;
+  if(!p.supported)body=`<p class="ro">${esc(p.msg)}</p>`;
+  else if(!p.on)body=`<p class="ro" style="margin-top:0">Rappel à 20h, résultat de tes duels, alertes quand un pote te double, fin de pomodoro même app fermée.</p>${p.msg?`<p class="ro" style="color:var(--lose)">${esc(p.msg)}</p>`:''}<button class="btn wide" id="pushon" ${p.busy?'disabled':''}>Activer les notifications</button>`;
+  else body=NOTIF_TYPES.map(([k,l])=>`<button class="item" role="checkbox" aria-checked="${notifPref(k)}" data-notif="${k}"><span class="txt"><span class="t">${l}</span></span><span class="ck"></span></button>`).join('')+`<button class="btn sec wide" id="pushtest">Envoyer une notification de test</button><button class="btn ghost wide" id="pushoff" ${p.busy?'disabled':''}>Désactiver sur cet appareil</button>`;
+  return `<h2>Notifications</h2><div class="card">${body}</div>`;
+}
+async function schedulePomoPush(){
+  if(!SB||!S.push.on||!notifPref('pomo'))return;
+  try{
+    await SB.from('push_scheduled').delete().eq('user_id',S.uid).eq('kind','pomo');
+    if(!PM.running||!PM.endAt)return;
+    const w=PM.phase==='work';const [wm,bm]=PM_PRESETS[PM.preset];
+    await SB.from('push_scheduled').insert({user_id:S.uid,kind:'pomo',send_at:new Date(PM.endAt).toISOString(),
+      title:w?'🍅 Pomodoro terminé':'☕ Pause terminée',body:w?'Bien joué ! Prends tes '+bm+' min de pause.':'On repart pour '+wm+' min de focus ?'});
+  }catch(e){}
+}
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t||t.disabled)return;
+  if(t.id==='pushon')enablePush();
+  if(t.id==='pushtest'&&SB){SB.from('push_scheduled').insert({user_id:S.uid,kind:'test',send_at:new Date().toISOString(),title:'❄️ Test réussi',body:'Les notifications du winter arc fonctionnent sur cet appareil.'}).then(({error})=>toast(error?'Échec : as-tu lancé notifications.sql ?':'Envoyée ! Elle arrive en moins d’une minute.'));}if(t.id==='pushoff')disablePush();if(t.dataset.notif)setNotifPref(t.dataset.notif);});
+
 // ================= boot (Supabase) =================
 let SB=null;
 function goSolo(){S.mode='solo';S.uid='solo';S.me=loadSolo();S.players=S.me?{solo:S.me}:{};recompute();render();}
@@ -828,7 +888,7 @@ async function fetchPlayers(){
 async function startWith(uid){
   S.uid=uid;S.mode='loading';render();
   try{await fetchPlayers();}catch(e){toast('Connexion au serveur impossible.');}
-  S.mode='shared';S.canWrite=true;recompute();render();
+  S.mode='shared';S.canWrite=true;recompute();render();refreshPush().then(()=>{if(S.tab==='perso')render();});
   setInterval(()=>{if(!document.hidden)fetchPlayers().catch(()=>{});},20000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchPlayers().catch(()=>{});});
 }
