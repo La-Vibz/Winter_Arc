@@ -237,7 +237,23 @@ const BASE_BADGES=[
  {id:'s50',e:'🏔️',n:'Inarrêtable',d:'50 journées parfaites d’affilée',r:300,p:s=>[Math.min(s.best,50),50]},
  {id:'finish',e:'👑',n:'Arc terminé',d:'Finir le 31/12 avec 70 % de réussite',r:300,p:s=>[s.finished?1:0,1]}
 ];
-const HOBBY_TIERS=[[10,'Apprenti',40],[25,'Adepte',80],[45,'Maître',150]];
+const HOBBY_TIERS=[[8,'Apprenti',40,'hand'],[20,'Adepte',80,'top'],[40,'Maître',150,'head']];
+const HOBBY_CATS={
+ keys:{e:'🎹',kw:['piano','clavier','synth','orgue'],hand:['keytar','Keytar'],top:['tux','Smoking de concert','#1B1F27'],head:['headphones','Casque de studio','#C0C7CF']},
+ voice:{e:'🎤',kw:['chant','rap','dj','mix','musique','beat','chorale','slam'],hand:['mic','Micro'],top:['sequin','Veste à paillettes','#C9A227'],head:['headphones','Casque de DJ','#E0662A']},
+ strings:{e:'🎸',kw:['guitar','basse','ukul','violon','batterie','harpe','saxo','trompette','flute','instrument'],hand:['guitar','Guitare'],top:['leather','Veste en cuir','#2B211C'],head:['bandana','Bandana rock','#B3261E']},
+ lang:{e:'🗣️',kw:['japon','anglais','espagnol','langue','chinois','coreen','italien','allemand','portugais','arabe','russe','neerland','polonais','turc','grec','hebreu','mandarin','vietnam','thai','suedois','norveg','hindi','english','spanish'],hand:['book','Carnet de vocabulaire'],top:['varsity','Sweat d’université','#7A1F2B'],head:['glasses','Lunettes de polyglotte','#1B1B22']},
+ photo:{e:'📷',kw:['photo','video','film','montage','cinema','vlog','youtube'],hand:['camera','Appareil photo'],top:['vest','Gilet de reporter','#8A7A55'],head:['capback','Casquette à l’envers','#2F6EA5']},
+ art:{e:'🎨',kw:['dessin','peint','illustr','graph','art','sculpt','design','tattoo','manga','croquis','aquarelle','calligraph','poterie','ceram','couture','tricot','crochet','broderie'],hand:['brush','Pinceau'],top:['apron','Tablier d’atelier','#3A6B8C'],head:['beret','Béret d’artiste','#8B1E2D']},
+ cook:{e:'🍳',kw:['cuisin','patiss','boulang','cook','barista','cocktail','recette'],hand:['spatula','Spatule'],top:['chef','Veste de chef','#F2F2EE'],head:['toque','Toque','#F7F7F7']},
+ read:{e:'📚',kw:['lecture','lire','ecri','poesie','livre','journal','roman','philo','histoire'],hand:['book','Livre fétiche'],top:['cardigan','Cardigan','#8A5A3B'],head:['roundglasses','Lunettes rondes','#6B4A2B']},
+ code:{e:'💻',kw:['code','coder','program','dev','informatique','ia','python','web','javascript','robot','electronique','arduino','automat'],hand:['laptop','Ordinateur portable'],top:['devhoodie','Hoodie de dev','#2B3038'],head:['headset','Casque micro','#4CC98B']},
+ game:{e:'🎮',kw:['jeu','jeux','gaming','echec','league','lol','esport','stream','twitch','speedrun','valorant','fortnite'],hand:['gamepad','Manette'],top:['retro','T-shirt rétro','#5B3FA0'],head:['headset','Casque gaming','#5B3FA0']},
+ sport:{e:'⚽',kw:['foot','basket','tennis','boxe','danse','escalade','natation','nage','velo','course','run','surf','skate','judo','karate','mma','rugby','volley','hand','badminton','padel','ski','snow','muscu','crossfit','golf','equitation','ping','sport'],hand:['ball','Ballon'],top:['clubjersey','Maillot de club','#1F8A5B'],head:['sweatband','Bandeau de sport','#F2F4F6']},
+ zen:{e:'🧘',kw:['yoga','medit','stretch','pilates','respir','mobilite','souplesse','tai','qi'],hand:['mat','Tapis roulé'],top:['yoga','Tenue de yoga','#2E8C8C'],head:['zenband','Bandeau zen','#9ED9D0']},
+ other:{e:'⭐',kw:[],hand:['trophy','Trophée'],top:['fan','T-shirt de passionné','#E0662A'],head:['capfan','Casquette de passionné','#E0662A']}
+};
+const LEGACY_HOB={keytar:'keys',guitar:'strings',camera:'photo',book:'lang',brush:'art',mic:'voice',ball:'sport'};
 const SKIN=['#F6D7C3','#EBC2A0','#D5A07A','#B07A52','#8A5A3B','#5E3B26'];
 const HAIRC=[['Noir','#1E1B1C'],['Brun','#4A2F1F'],['Châtain','#7A4E2D'],['Blond','#D9B45A'],['Roux','#B5532A'],['Gris','#9AA1A8'],['Rose','#E38BB5'],['Bleu','#4E8FD1']];
 const HAIRS=[['short','Courts'],['buzz','Rasés'],['long','Longs'],['bun','Chignon'],['mohawk','Crête'],['curly','Bouclés'],['bald','Chauve']];
@@ -265,7 +281,7 @@ const ITEMS=[
  {id:'cape',slot:'back',n:'Cape de glace',price:300,c:'#8CC4E8',kind:'cape',req:'s50'},
  {id:'dumbbell',slot:'hand',n:'Haltère',price:100,kind:'dumbbell',req:'iron'}
 ];
-const SLOTS=[['top','Hauts'],['bottom','Bas'],['head','Tête'],['back','Dos'],['hand','Main']];
+const SLOTS=[['hobby','Loisirs'],['top','Hauts'],['bottom','Bas'],['head','Tête'],['back','Dos'],['hand','Main']];
 const COIN={win:40,tie:15,loss:5,perfect:5,pomo:2};
 const WD=['L','M','M','J','V','S','D'];
 const MONTHS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
@@ -287,22 +303,24 @@ const inArc=d=>d>=START&&d<=END;
 const viewable=d=>inArc(d)&&d<=today();
 const editable=d=>viewable(d)&&(today()-d)/864e5<=EDIT_BACK;
 const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'loisir';
-function hobbyKind(h){const s=slug(h);
-  if(/piano|clavier|synth/.test(s))return'keytar'; if(/guitar|basse|ukul/.test(s))return'guitar';
-  if(/photo|video/.test(s))return'camera'; if(/dessin|peint|illustr|graph/.test(s))return'brush';
-  if(/chant|musique|rap|mix|dj/.test(s))return'mic'; if(/foot|basket|tennis|boxe|sport|danse|escalade/.test(s))return'ball';
-  return'book';}
-function hobbyEmoji(h){const s=slug(h);if(/japon/.test(s))return'🗾';if(/anglais|espagnol|langue|chinois|coreen|italien|allemand|portugais/.test(s))return'🗣️';return HOBBY_ITEMS[hobbyKind(h)][1];}
+function hobbyCat(h){const sl=slug(h),tk=sl.split('-');
+  for(const c of ['keys','voice','strings','lang','game','photo','art','cook','read','code','sport','zen']){if(HOBBY_CATS[c].kw.some(k=>tk.some(t=>t.startsWith(k))))return c;}
+  return 'other';}
+const hobbyVariant=h=>hobbyCat(h)==='lang'&&/japon/.test(slug(h))?'jp':'';
+function hobbyEmoji(h){return hobbyVariant(h)==='jp'?'🗾':HOBBY_CATS[hobbyCat(h)].e;}
+function hobbyItem(cat,slot,variant){const C=HOBBY_CATS[cat];if(!C||!C[slot])return null;
+  let sp=C[slot];if(slot==='head'&&variant==='jp')sp=['hachimaki','Hachimaki','#F7F7F7'];
+  return {id:'hob-'+cat+'-'+slot+(variant?'-'+variant:''),slot,n:sp[1],kind:sp[0],c:sp[2],price:{hand:120,top:200,head:250}[slot],hobby:true};}
 function hash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0;};}
 function rng(seed){let a=hash(seed)();return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const t=a<0?0:255,p=Math.abs(a);r=Math.round((t-r)*p+r);g=Math.round((t-g)*p+g);b=Math.round((t-b)*p+b);return'#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
-const itemById=id=>{if(!id)return null;if(id.startsWith('hob-')){const k=id.slice(4);const d=HOBBY_ITEMS[k];return d?{id,slot:'hand',n:d[0],price:150,kind:k,hobby:true}:null;}return ITEMS.find(i=>i.id===id)||null;};
+const itemById=id=>{if(!id)return null;if(id.startsWith('hob-')){const pt=id.split('-');if(pt.length===2)return LEGACY_HOB[pt[1]]?Object.assign(hobbyItem(LEGACY_HOB[pt[1]],'hand'),{id}):null;return hobbyItem(pt[1],pt[2],pt[3]);}return ITEMS.find(i=>i.id===id)||null;};
 
 // ================= stats =================
 function stats(pl){
   const days=(pl&&pl.days)||{};
   let xp=0,checks=0,perfect=0,run=0,best=0,sport=0,focus=0,hobby=0,alcohol=0,done=0,app=0,pomo=0;
-  const ws={},ratio={},hobbyBy={};
+  const ws={},ratio={},hobbyBy={},hRun={},hLast={},hBest={},hWk={},hWkMax={};
   const t=today(),tk=key(t),last=t<END?t:END;
   for(let d=new Date(START);d<=last;d=add(d,1)){
     const k=key(d),r=days[k]||{};let dn=0,ap=0,score=0,apAll=0;
@@ -313,7 +331,9 @@ function stats(pl){
       if(p.k==='sport'){if(v){xp+=10;checks++;sport++;const w=key(monday(d));ws[w]=(ws[w]||0)+1;}continue;}
       ap++;
       if(v){dn++;xp+=10;checks++;if(p.k==='focus')focus++;if(p.k==='alcohol')alcohol++;
-        if(p.k==='hobby'){hobby++;if(typeof r.hobby==='string'){const s=slug(r.hobby);hobbyBy[s]=(hobbyBy[s]||0)+1;}}}
+        if(p.k==='hobby'){hobby++;if(typeof r.hobby==='string'){const s=slug(r.hobby);hobbyBy[s]=(hobbyBy[s]||0)+1;
+          hRun[s]=hLast[s]===key(add(d,-1))?(hRun[s]||0)+1:1;hLast[s]=k;hBest[s]=Math.max(hBest[s]||0,hRun[s]);
+          const wk=s+'|'+key(monday(d));hWk[wk]=(hWk[wk]||0)+1;hWkMax[s]=Math.max(hWkMax[s]||0,hWk[wk]);}}}
     }
     ratio[k]={dn,ap,sport:!!r.sport,score};
     if(ap&&dn===ap){perfect++;xp+=25;run++;if(run>best)best=run;}
@@ -322,14 +342,19 @@ function stats(pl){
   }
   const iron=Object.values(ws).filter(n=>n>=4).length; xp+=iron*50;
   const overall=app?done/app:0;
-  return {xp,checks,perfect,streak:run,best,sport,focus,hobby,alcohol,iron,ws,ratio,overall,pomo,hobbyBy,finished:t>=END&&overall>=.7};
+  return {xp,checks,perfect,streak:run,best,sport,focus,hobby,alcohol,iron,ws,ratio,overall,pomo,hobbyBy,hBest,hWkMax,finished:t>=END&&overall>=.7};
 }
 function badgesFor(pl,st){
   const list=BASE_BADGES.map(b=>{const [c,g]=b.p(st);return {id:b.id,e:b.e,n:b.n,d:b.d,r:b.r,c,g,won:c>=g};});
   const seen=new Set();
   for(const h of (pl&&pl.hobbies)||[]){const s=slug(h);if(seen.has(s))continue;seen.add(s);
-    const cnt=st.hobbyBy[s]||0;
-    HOBBY_TIERS.forEach(([g,title,r],i)=>list.push({id:'h'+(i+1)+'-'+s,e:hobbyEmoji(h),n:title+' '+h,d:g+' h de '+h,r,c:Math.min(cnt,g),g,won:cnt>=g,hob:h}));}
+    const cnt=st.hobbyBy[s]||0,cat=hobbyCat(h),v=hobbyVariant(h),e=hobbyEmoji(h);
+    const tier=i=>{const [g,title,r,slot]=HOBBY_TIERS[i];const it=hobbyItem(cat,slot,slot==='head'?v:'');return {id:'h'+(i+1)+'-'+s,e,n:title+' '+h,d:g+' h de '+h,r,c:Math.min(cnt,g),g,won:cnt>=g,hob:h,gift:it&&it.n};};
+    const wk=Math.min(st.hWkMax[s]||0,4),run=Math.min(st.hBest[s]||0,5);
+    list.push(tier(0),
+      {id:'hw-'+s,e,n:'Semaine '+h,d:'4 séances de '+h+' dans la même semaine',r:50,c:wk,g:4,won:wk>=4,hob:h},
+      {id:'hs-'+s,e,n:'Régulier en '+h,d:h+' 5 jours d’affilée',r:60,c:run,g:5,won:run>=5,hob:h},
+      tier(1),tier(2));}
   return list;
 }
 function rankOf(xp){let i=0;for(let j=0;j<RANKS.length;j++)if(xp>=RANKS[j][0])i=j;
@@ -398,7 +423,7 @@ function drawChar(cv,pl,stage){
   });
   R(cx-1,legTop,2,Math.min(2,legLen-2),bc);
   // arms
-  const topSleeve={tee:3,tank:0,hoodie:99,kimono:99,puffer:99,jersey:3}[top.kind]??3;
+  const topSleeve={tee:3,tank:0,yoga:0,hoodie:99,kimono:99,puffer:99,jersey:3,tux:99,leather:99,sequin:99,varsity:99,chef:99,cardigan:99,devhoodie:99,vest:3,apron:3,retro:3,clubjersey:3,fan:3}[top.kind]??3;
   const armH=torsoH+1,ax=[cx-half-armW,cx+half];
   const tc=top.c,tcD=shade(tc,-.18),tcL=shade(tc,.15);
   ax.forEach((x,i)=>{
@@ -419,12 +444,27 @@ function drawChar(cv,pl,stage){
     let c=tc;if(top.kind==='puffer'&&row%3===2)c=tcD;
     R(cx-hw-puff,yT+row,2*hw+2*puff,1,c);R(cx+hw-1+puff,yT+row,1,1,tcD);
   }
-  if(top.kind==='tank'){R(cx-half,yT,Math.max(1,half-waist+1),2,skin);R(cx+waist,yT,Math.max(1,half-waist),2,skin);R(cx-2,yT,4,2,skin);}
+  if(top.kind==='tank'||top.kind==='yoga'){R(cx-half,yT,Math.max(1,half-waist+1),2,skin);R(cx+waist,yT,Math.max(1,half-waist),2,skin);R(cx-2,yT,4,2,skin);}
   if(top.kind==='kimono'){for(let i=0;i<Math.min(4,torsoH-2);i++){R(cx-1-i,yT+i,1,1,'#2A2F36');R(cx+i,yT+i,1,1,'#2A2F36');}R(cx-waist,yT+torsoH-2,2*waist,1,'#1E1B1C');}
   if(top.kind==='jersey'){R(cx-half,yT+2,2*half,1,'#2D6FA3');R(cx-1,yT+3,2,Math.min(3,torsoH-4),'#2D6FA3');}
-  if(top.kind==='hoodie'){R(cx-3,yT,6,1,tcD);if(torsoH>6)R(cx-2,yT+torsoH-3,4,2,tcD);}
+  if(top.kind==='hoodie'||top.kind==='devhoodie'){R(cx-3,yT,6,1,tcD);if(torsoH>6)R(cx-2,yT+torsoH-3,4,2,tcD);}
+  const TH=torsoH,G='#4CC98B';
+  switch(top.kind){
+    case'tux':R(cx-1,yT,2,TH,'#F2F4F6');for(let i=2;i<TH-1;i+=2)R(cx,yT+i,1,1,'#2A2F36');R(cx-2,yT,1,1,'#B3261E');R(cx+1,yT,1,1,'#B3261E');R(cx-1,yT,2,1,'#7A1A14');break;
+    case'leather':R(cx-3,yT,2,2,tcL);R(cx+1,yT,2,2,tcL);R(cx,yT+1,1,TH-1,'#9AA1A8');break;
+    case'sequin':for(let y=0;y<TH;y++)for(let x=-half;x<half;x++)if((x+y*2)%4===0)R(cx+x,yT+y,1,1,'#FFF3B0');break;
+    case'varsity':R(cx-half,yT+2,2*half,1,'#F2F4F6');R(cx-3,yT+3,2,2,'#F2F4F6');break;
+    case'vest':R(cx-1,yT,2,TH,'#E9EEF2');R(cx-half+1,yT+2,2,2,tcD);R(cx+half-3,yT+2,2,2,tcD);if(TH>7){R(cx-half+1,yT+5,2,2,tcD);R(cx+half-3,yT+5,2,2,tcD);}break;
+    case'apron':R(cx-3,yT,1,2,tcL);R(cx+2,yT,1,2,tcL);R(cx-2,yT+3,1,1,'#E0662A');R(cx+1,yT+4,1,1,'#F2C14E');R(cx-1,yT+5,1,1,'#D8352E');break;
+    case'chef':for(let i=2;i<TH-1;i+=2){R(cx-2,yT+i,1,1,'#9AA1A8');R(cx+1,yT+i,1,1,'#9AA1A8');}R(cx-2,yT,4,1,'#DDE3E8');break;
+    case'cardigan':R(cx,yT,1,TH,tcL);for(let i=2;i<TH-1;i+=2)R(cx-1,yT+i,1,1,'#F2C14E');break;
+    case'devhoodie':R(cx-2,yT+3,1,1,G);R(cx-3,yT+4,1,1,G);R(cx-2,yT+5,1,1,G);R(cx+1,yT+3,1,3,G);break;
+    case'retro':R(cx-2,yT+3,1,1,'#FF5A7A');R(cx,yT+3,1,1,'#FF5A7A');R(cx-2,yT+4,3,1,'#FF5A7A');R(cx-1,yT+5,1,1,'#FF5A7A');break;
+    case'clubjersey':for(let x=cx-half+1;x<cx+half;x+=2)R(x,yT,1,TH,'#F2F4F6');R(cx-1,yT,2,1,tcD);break;
+    case'fan':R(cx-1,yT+3,2,1,'#F2C14E');R(cx-2,yT+4,4,1,'#F2C14E');R(cx-1,yT+5,2,1,'#F2C14E');break;
+  }
   if(s>=3&&top.kind!=='puffer'){R(cx-half+2,yT+3,half-2,1,shade(tc,-.1));R(cx+1,yT+3,half-3,1,shade(tc,-.1));}
-  if(s>=5&&top.kind==='tank'){R(cx,yT+5,1,torsoH-6,tcL);}
+  if(s>=5&&(top.kind==='tank'||top.kind==='yoga')){R(cx,yT+5,1,torsoH-6,tcL);}
   // scarf
   if(back&&back.kind==='scarf'){R(cx-3,yT-1,6,2,back.c);R(cx+1,yT+1,2,Math.min(5,torsoH),shade(back.c,-.15));}
   // neck & head
@@ -448,6 +488,19 @@ function drawChar(cv,pl,stage){
     if(head.kind==='headband'){R(xH,yH+2,8,1,c);R(xH+8,yH+2,2,1,c);R(xH+9,yH+3,1,1,c);}
     if(head.kind==='beanie'){R(xH-1,yH-2,10,4,c);R(xH-1,yH+1,10,1,cD);R(cx-1,yH-4,2,2,'#F2F4F6');}
     if(head.kind==='cap'){R(xH,yH-2,8,3,c);R(xH+5,yH,5,1,cD);R(cx-1,yH-1,2,1,'#D8352E');}
+    switch(head.kind){
+      case'headphones':case'headset':R(xH-1,yH-2,10,1,c);R(xH-1,yH-1,1,3,c);R(xH+8,yH-1,1,3,c);R(xH-2,yH+2,2,3,c);R(xH+8,yH+2,2,3,c);if(head.kind==='headset'){R(cx+2,yH+6,4,1,'#2A2F36');R(cx+1,yH+6,1,1,'#E0662A');}break;
+      case'bandana':R(xH-1,yH-1,10,3,c);R(xH+1,yH,1,1,'#F2F4F6');R(xH+5,yH-1,1,1,'#F2F4F6');R(xH+3,yH+1,1,1,'#F2F4F6');R(xH+8,yH+1,2,2,c);break;
+      case'hachimaki':R(xH,yH+1,8,1,c);R(cx-1,yH+1,2,1,'#D8352E');R(xH+8,yH+1,2,1,c);R(xH+9,yH+2,1,2,c);break;
+      case'glasses':R(xH,yH+3,8,1,c);R(xH,yH+4,1,1,c);R(cx-1,yH+4,2,1,c);R(xH+7,yH+4,1,1,c);break;
+      case'roundglasses':R(cx-3,yH+4,1,1,c);R(cx-1,yH+4,2,1,c);R(cx+2,yH+4,1,1,c);R(cx-2,yH+3,1,1,c);R(cx+1,yH+3,1,1,c);break;
+      case'capback':R(xH,yH-2,8,3,c);R(xH-2,yH,3,1,cD);break;
+      case'beret':R(xH-1,yH-2,9,2,c);R(xH+1,yH-3,6,1,c);R(cx,yH-4,1,1,cD);break;
+      case'toque':R(xH,yH-1,8,2,c);R(xH-1,yH-6,10,5,c);R(xH+2,yH-5,1,3,'#DDE3E8');R(xH+6,yH-5,1,3,'#DDE3E8');break;
+      case'sweatband':R(xH,yH+2,8,1,c);R(xH,yH+2,1,1,'#D8352E');R(xH+7,yH+2,1,1,'#D8352E');break;
+      case'zenband':R(xH,yH+2,8,1,c);R(cx-1,yH+2,2,1,'#F29CB2');break;
+      case'capfan':R(xH,yH-2,8,3,c);R(xH+5,yH,5,1,cD);R(cx-1,yH-1,2,1,'#F2C14E');break;
+    }
     if(head.kind==='crown'){R(xH,yH-2,8,1,c);R(xH,yH-4,1,2,c);R(cx-1,yH-5,2,3,c);R(xH+7,yH-4,1,2,c);R(cx-1,yH-2,2,1,'#4E8FD1');}
   }
   // hand item
@@ -459,8 +512,13 @@ function drawChar(cv,pl,stage){
       case'camera':R(hx-1,hy,5,3,'#2A2F36');R(hx+1,hy+1,2,1,'#8CC4E8');R(hx,hy-1,2,1,'#2A2F36');break;
       case'book':R(hx-1,hy-1,4,5,'#C8372D');R(hx+2,hy-1,1,5,'#F4EFE3');R(hx,hy,1,1,'#F2C14E');break;
       case'brush':R(hx+1,hy-5,1,7,'#C98B4E');R(hx+1,hy-7,1,2,'#3A7FBF');break;
-      case'mic':R(hx+1,hy-1,1,3,'#2A2F36');R(hx,hy-4,3,3,'#9AA1A8');break;
+      case'mic':R(hx+1,hy-1,1,3,'#2A2F36');R(hx,hy-4,3,3,'#D5DAE0');R(hx,hy-4,3,1,'#F2F4F6');break;
       case'ball':R(hx,hy-3,4,4,'#F2F4F6');R(hx+1,hy-2,2,2,'#1B1B22');break;
+      case'spatula':R(hx+1,hy-5,1,7,'#C98B4E');R(hx,hy-8,3,3,'#9AA1A8');break;
+      case'laptop':R(hx-3,hy+1,8,1,'#9AA1A8');R(hx-2,hy-3,6,4,'#2A2F36');R(hx-1,hy-2,4,2,'#4E8FD1');break;
+      case'gamepad':R(hx-1,hy,5,3,'#2A2F36');R(hx,hy+1,1,1,'#E0662A');R(hx+2,hy+1,1,1,'#4CC98B');break;
+      case'mat':R(hx,hy-6,3,8,'#2E8C8C');R(hx+1,hy-6,1,8,'#9ED9D0');break;
+      case'trophy':R(hx-1,hy-4,5,3,'#F2C14E');R(hx,hy-1,3,2,'#C9A227');R(hx-1,hy+1,5,1,'#8A6D1A');break;
     }}
 }
 function drawYeti(cv){
@@ -484,7 +542,7 @@ function paintSprites(){
 }
 
 // ================= state =================
-const S={mode:'loading',db:null,uid:null,canWrite:true,me:null,players:{},sel:null,tab:'today',slot:'top',editing:false,draft:null,pending:false,inflight:false,pmSuggest:null};
+const S={mode:'loading',db:null,uid:null,canWrite:true,me:null,players:{},sel:null,tab:'today',slot:'hobby',editing:false,draft:null,pending:false,inflight:false,pmSuggest:null};
 let ST={};
 const t0=today();
 S.sel=key(viewable(t0)?t0:(t0<START?START:END));
@@ -550,17 +608,16 @@ function saveProfile(){
   const old=base.hobbies||[];
   if(base.days){for(let i=0;i<Math.min(old.length,ho.length);i++){if(old[i]!==ho[i]){for(const k in base.days){if(base.days[k]&&base.days[k].hobby===old[i])base.days[k]=Object.assign({},base.days[k],{hobby:ho[i]});}}}}
   S.me=Object.assign({},base,{pseudo:ps.slice(0,24),hobbies:ho,look:S.draft.look,joined:base.joined||Date.now(),updated:Date.now()});
-  if(S.me.equip&&S.me.equip.hand&&S.me.equip.hand.startsWith('hob-')&&!ho.some(h=>'hob-'+hobbyKind(h)===S.me.equip.hand)){} // keep owned items
   S.editing=false;S.draft=null;
   if(S.mode!=='solo')S.players[S.uid]=S.me;
   recompute();render();save();
   toast(first?'❄️ Bienvenue dans le winter arc, '+S.me.pseudo:'Profil mis à jour');
 }
 function shopItems(){
-  const list=ITEMS.slice();
-  const seen=new Set();
-  for(const h of (S.me&&S.me.hobbies)||[]){const k=hobbyKind(h);if(seen.has(k))continue;seen.add(k);
-    list.push(Object.assign({},itemById('hob-'+k),{req:'h1-'+slug(h),reqName:'Apprenti '+h}));}
+  const list=ITEMS.slice(),seen=new Set();
+  for(const h of (S.me&&S.me.hobbies)||[]){const cat=hobbyCat(h),v=hobbyVariant(h),sl=slug(h);
+    HOBBY_TIERS.forEach(([g,title,r,slot],i)=>{const it=hobbyItem(cat,slot,slot==='head'?v:'');if(!it||seen.has(it.id))return;seen.add(it.id);
+      list.push(Object.assign(it,{req:'h'+(i+1)+'-'+sl,reqName:title+' '+h,forHobby:h}));});}
   return list;
 }
 function buy(id){
@@ -681,7 +738,7 @@ function dayHTML(st){
       else if(!a)sub='Repos le week-end';
       else if(p.k==='alcohol')sub='Du lundi au vendredi';
       else if(p.k==='focus')sub='Tel dans une autre pièce, une seule tâche';
-      else if(p.k==='hobby')sub=typeof r.hobby==='string'?r.hobby:((S.me.hobbies||[]).length?S.me.hobbies.join(' ou '):'Piano, langue, photo…');
+      else if(p.k==='hobby')sub=typeof r.hobby==='string'?r.hobby:((S.me.hobbies||[]).length?S.me.hobbies.join(' ou '):'Ton loisir du jour');
       else if(p.k==='sleep')sub='Couché assez tôt pour 8 h';
       else if(p.k==='phone')sub='Temps d’écran du jour';
       else if(p.k==='food')sub='Protéines, légumes, pas de grignotage';
@@ -713,7 +770,7 @@ function editorHTML(first){
   return `<div class="join"><h3>${first?'Crée ton personnage':'Modifier mon profil'}</h3>
    <p>${first?'Il commence tout petit. Chaque XP le fait grandir, jusqu’au colosse de glace le 31 décembre.':'Tout est modifiable à tout moment. Si tu renommes un loisir, ton historique suit.'}</p>
    <label for="ps">Pseudo</label><input id="ps" data-draft="pseudo" maxlength="24" value="${esc(d.pseudo)}" placeholder="Ton pseudo">
-   <label for="ho">Loisirs à maîtriser, séparés par des virgules</label><input id="ho" data-draft="hobbies" maxlength="80" value="${esc(d.hobbies)}" placeholder="Piano, Japonais">
+   <label for="ho">Loisirs à maîtriser, séparés par des virgules</label><input id="ho" data-draft="hobbies" maxlength="80" value="${esc(d.hobbies)}" placeholder="Ex. : guitare, espagnol, dessin">
    <div class="editor"><div>${spr('draft',32,'data-stage="'+(first?0:rankOf((ST[S.uid]||stats(S.me)).xp).i)+'"')}</div><div>
      <span class="lab">Genre</span><div class="opts">${SEX.map(([v,l])=>`<button class="pill ${L.sex===v?'on':''}" data-look="sex:${v}">${l}</button>`).join('')}</div>
      <span class="lab">Peau</span><div class="opts">${SKIN.map((c,i)=>`<button class="sw ${L.skin===i?'on':''}" style="background:${c}" data-look="skin:${i}" aria-label="Teinte ${i+1}"></button>`).join('')}</div>
@@ -727,7 +784,7 @@ function persoHTML(w,st){
   const rk=rankOf(st.xp);
   let html=`<section class="show">${spr(S.uid,64)}<div><div class="big">${esc(S.me.pseudo)}</div><div class="meta">${rk.e} ${rk.name}, stade ${rk.i+1} sur 7${rk.next?'<br>'+rk.toNext+' XP pour grandir':''}</div><div class="wallet">${w.bal} 💠</div><div class="rec">Duels : ${w.wins} V, ${w.ties} N, ${w.losses} D</div></div></section>
   <button class="btn sec wide" id="editp">Modifier pseudo, loisirs et apparence</button>${S.mode==='shared'?'<button class="btn ghost wide" id="signout">Se déconnecter</button>':''}`+notifHTML();
-  const items=shopItems().filter(i=>i.slot===S.slot);
+  const items=shopItems().filter(i=>S.slot==='hobby'?i.hobby:(i.slot===S.slot&&!i.hobby));
   html+=`<h2>Boutique</h2><div class="tabsl">${SLOTS.map(([k,l])=>`<button class="pill ${S.slot===k?'on':''}" data-slot="${k}">${l}</button>`).join('')}</div><div class="shop">`;
   const eq=Object.assign({top:'tee-white',bottom:'jog-grey'},S.me.equip||{});
   for(const it of items){
@@ -738,14 +795,14 @@ function persoHTML(w,st){
     if(owned)btn=`<button class="btn ${isEq?'':'sec'}" data-equip="${it.id}" ${S.canWrite?'':'disabled'}>${isEq?(it.slot==='top'||it.slot==='bottom'?'Équipé':'Retirer'):'Équiper'}</button>`;
     else if(locked){rq='Succès requis : '+esc(it.reqName||(reqB?reqB.n:''));btn=`<button class="btn sec" disabled>🔒 ${it.price} 💠</button>`;}
     else btn=`<button class="btn" data-buy="${it.id}" ${w.bal<it.price||!S.canWrite?'disabled':''}>${it.price} 💠</button>`;
-    html+=`<div class="it ${isEq?'eq':''}">${spr(S.uid,32,'data-item="'+it.id+'"')}<div class="nm">${esc(it.n)}</div>${rq?`<div class="rq">${rq}</div>`:''}${btn}</div>`;
+    html+=`<div class="it ${isEq?'eq':''}">${spr(S.uid,32,'data-item="'+it.id+'" data-stage="'+Math.max(3,rk.i)+'"')}<div class="nm">${esc(it.n)}</div>${it.forHobby&&!rq?`<div class="rq">${hobbyEmoji(it.forHobby)} ${esc(it.forHobby)}</div>`:''}${rq?`<div class="rq">${rq}</div>`:''}${btn}</div>`;
   }
   html+='</div><p class="note">💠 Tu gagnes des cristaux avec les duels, les succès, les journées parfaites (+5) et les pomodoros (+2).</p>';
   return html;
 }
 function badgesHTML(w){
   const won=w.badges.filter(b=>b.won).length;
-  return `<h2>Succès <small>${won}/${w.badges.length}</small></h2><div class="badges">`+w.badges.map(b=>`<div class="badge ${b.won?'won':'off'}"><div class="e">${b.e}</div><div class="bn">${esc(b.n)}</div><div class="bd">${b.won?'Débloqué':esc(b.d)}</div><div class="rw">+${b.r} 💠</div>${b.g>1&&!b.won?`<div class="pg"><i style="width:${Math.round(b.c/b.g*100)}%"></i></div>`:''}</div>`).join('')+'</div><p class="note">Les succès de loisir s’adaptent à ceux que tu as choisis dans ton profil.</p>';
+  return `<h2>Succès <small>${won}/${w.badges.length}</small></h2><div class="badges">`+w.badges.map(b=>`<div class="badge ${b.won?'won':'off'}"><div class="e">${b.e}</div><div class="bn">${esc(b.n)}</div><div class="bd">${b.won?'Débloqué':esc(b.d)}</div><div class="rw">+${b.r} 💠</div>${b.gift?`<div class="bd">🎁 ${esc(b.gift)}</div>`:''}${b.g>1&&!b.won?`<div class="pg"><i style="width:${Math.round(b.c/b.g*100)}%"></i></div>`:''}</div>`).join('')+'</div><p class="note">Les succès de loisir et leurs récompenses s’adaptent aux loisirs choisis dans ton profil. Modifie-les dans l’onglet Perso.</p>';
 }
 function boardHTML(){
   const list=Object.keys(S.players).filter(id=>S.players[id]&&S.players[id].pseudo).map(id=>({id,p:S.players[id],s:ST[id]})).sort((a,b)=>b.s.xp-a.s.xp);
